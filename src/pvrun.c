@@ -1,10 +1,18 @@
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#else
+#error Please make sure you run autogen.sh!
+#endif
+
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -46,12 +54,11 @@ int add_pv_option(char *buf, int *buf_pos, char **argv, int *argv_pos,
     }                                                                          \
   } while (0);
 
-#define VERSION_TEMPLATE                                                       \
-  "pvrun version 1.0.0\n"                                                      \
-  "copyright 2023 conrad pankoff <deoxxa@fknsrs.biz> "                         \
-  "(https://www.fknsrs.biz/)\n"
+#define VERSION_TEMPLATE "%1$s %2$s - copyright (c) 2023 conrad pankoff\n"
 
-void print_version(FILE *stream) { fprintf(stream, VERSION_TEMPLATE); }
+void print_version(FILE *stream) {
+  fprintf(stream, VERSION_TEMPLATE, PACKAGE_NAME, PACKAGE_VERSION);
+}
 
 #define USAGE_TEMPLATE                                                         \
   "usage: %1$s [-h/-V] [OPTIONS... --] PROGRAM [ARGUMENTS]\n"                  \
@@ -72,10 +79,13 @@ void print_version(FILE *stream) { fprintf(stream, VERSION_TEMPLATE); }
   "  %1$s -V\n"                                                                \
   "  %1$s cp src_file dst_file\n"                                              \
   "  %1$s -- cp -a src_dir dst_dir\n"                                          \
-  "  %1$s -N my-copy -- cp -a src_dir dst_dir\n"
+  "  %1$s -N my-copy -- cp -a src_dir dst_dir\n"                               \
+  "\n"                                                                         \
+  "bugs: %4$s and %5$s\n"
 
 void print_usage_and_exit(const char *name, FILE *stream, int exit_code) {
-  fprintf(stream, USAGE_TEMPLATE, name, PV_BUF_SIZE, PV_ARGV_SIZE);
+  fprintf(stream, USAGE_TEMPLATE, name, PV_BUF_SIZE, PV_ARGV_SIZE,
+          PACKAGE_BUGREPORT, PACKAGE_URL);
   exit(exit_code);
 }
 
@@ -140,10 +150,13 @@ int main(int argc, char *argv[]) {
   }
 
   if (pid == 0) {
+#if defined HAVE_SYS_PRCTL_H && defined HAVE_DECL_PR_SET_PDEATHSIG &&          \
+    HAVE_DECL_PR_SET_PDEATHSIG
     if (prctl(PR_SET_PDEATHSIG, SIGTERM) == -1) {
       perror("prctl");
       exit(1);
     }
+#endif
     if (getppid() != ppid_before_fork) {
       fprintf(stderr, "parent already exited\n");
       exit(1);
