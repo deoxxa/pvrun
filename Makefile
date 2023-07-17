@@ -1,5 +1,4 @@
-CFLAGS ?= -Werror -Wall -Wpedantic
-LDFLAGS ?= -Werror -Wall -Wpedantic
+CFLAGS ?= -Werror -Wall
 
 SRCS := src/pvrun.c
 OBJS := $(patsubst %.c,%.o,$(SRCS))

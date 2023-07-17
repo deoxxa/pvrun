@@ -46,16 +46,21 @@ int add_pv_option(char *buf, int *buf_pos, char **argv, int *argv_pos,
     }                                                                          \
   } while (0);
 
-void print_version(FILE *stream) { fprintf(stream, "pvrun version 1.0.0\n"); }
+#define VERSION_TEMPLATE                                                       \
+  "pvrun version 1.0.0\n"                                                      \
+  "copyright 2023 conrad pankoff <deoxxa@fknsrs.biz> "                         \
+  "(https://www.fknsrs.biz/)\n"
+
+void print_version(FILE *stream) { fprintf(stream, VERSION_TEMPLATE); }
 
 #define USAGE_TEMPLATE                                                         \
-  "usage: %s [-h/-V] [OPTIONS... --] PROGRAM [ARGUMENTS]\n"                    \
+  "usage: %1$s [-h/-V] [OPTIONS... --] PROGRAM [ARGUMENTS]\n"                  \
   "  -h             print this help and exit (must be first argument)\n"       \
   "  -V             print version and exit (must be first argument)\n"         \
   "  OPTIONS        additional arguments to supply to pv (optional). must\n"   \
   "                 begin with an argument starting with '-', must be\n"       \
   "                 terminated with --, can not contain options -d or -R,\n"   \
-  "                 maximum count of %d, maximum combined length of %d\n"      \
+  "                 maximum count of %3$d, maximum combined length of %2$d\n"  \
   "                 bytes including spaces. if a positional 'file' argument\n" \
   "                 is supplied, it will not work as expected. see 'man pv'\n" \
   "                 for more information.\n"                                   \
@@ -63,24 +68,27 @@ void print_version(FILE *stream) { fprintf(stream, "pvrun version 1.0.0\n"); }
   "  ARGUMENTS      arguments for target program (optional)\n"                 \
   "\n"                                                                         \
   "examples:\n"                                                                \
-  "  pvrun -h\n"                                                               \
-  "  pvrun -V\n"                                                               \
-  "  pvrun cp src_file dst_file\n"                                             \
-  "  pvrun -- cp -a src_dir dst_dir\n"                                         \
-  "  pvrun -s 100000m -- dd if=/dev/urandom of=/dev/null bs=1m count=100000\n"
+  "  %1$s -h\n"                                                                \
+  "  %1$s -V\n"                                                                \
+  "  %1$s cp src_file dst_file\n"                                              \
+  "  %1$s -- cp -a src_dir dst_dir\n"                                          \
+  "  %1$s -N my-copy -- cp -a src_dir dst_dir\n"
 
 void print_usage_and_exit(const char *name, FILE *stream, int exit_code) {
-  fprintf(stream, USAGE_TEMPLATE, name, PV_ARGV_SIZE, PV_BUF_SIZE);
+  fprintf(stream, USAGE_TEMPLATE, name, PV_BUF_SIZE, PV_ARGV_SIZE);
   exit(exit_code);
 }
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
+    print_version(stderr);
+    fprintf(stderr, "\n");
     print_usage_and_exit(argv[0], stderr, 1);
   }
 
   if (strcmp(argv[1], "-h") == 0) {
     print_version(stdout);
+    fprintf(stdout, "\n");
     print_usage_and_exit(argv[0], stdout, 0);
   }
 
